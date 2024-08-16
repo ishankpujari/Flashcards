@@ -1,3 +1,4 @@
+route.js in Generate
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ReadableStream } from 'web-streams-polyfill';
@@ -87,3 +88,4 @@ export async function POST(req) {
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
+
