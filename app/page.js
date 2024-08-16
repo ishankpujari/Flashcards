@@ -4,6 +4,7 @@ import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Container } from '@mui/material';
 import Head from "next/head";
 import { AppBar, Toolbar, Typography, Button, Box, Grid } from "@mui/material";
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -16,8 +17,8 @@ export default function Home() {
         <Toolbar>
           <Typography variant="h6" style={{ flexGrow: 1 }}>Flashcard SaaS</Typography>
           <SignedOut>
-            <Button color="inherit">Log in</Button>
-            <Button color="inherit">Sign up</Button>
+            <Button color="inherit"><Link href = "/sign-in">Sign in</Link></Button>
+            <Button color="inherit"><Link href = "/sign-up">Sign up</Link></Button>
           </SignedOut>
           <SignedIn>
             <UserButton />
@@ -70,8 +71,11 @@ export default function Home() {
               <Typography variant="h6">Basic Plan</Typography>
               <Typography>
                 Simply input your text and let our software do the rest. Creating
-                flashcards has never been easier
+                flashcards has never been easier.
               </Typography>
+              <Button variant='contained' color='primary' sx={{ mt: 2 }}>
+                Choose this plan
+              </Button>
             </Box>
           </Grid>
           <Grid item xs={12} md={4}>
@@ -86,6 +90,9 @@ export default function Home() {
                 Our AI intelligently breaks down your text into concise
                 flashcards, perfect for studying
               </Typography>
+              <Button variant='contained' color='primary' sx={{ mt: 2 }}>
+                Choose this plan
+              </Button>
             </Box>
           </Grid>
           <Grid item xs={12} md={4}>
@@ -99,6 +106,10 @@ export default function Home() {
               <Typography>
                 Access your flashcards from any device, at any time. Study on the go with ease.
               </Typography>
+              <br />
+              <Button variant='contained' color='primary' sx={{ mt: 2 }}>
+                Choose this plan
+              </Button>
             </Box>
           </Grid>
         </Grid>
