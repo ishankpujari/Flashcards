@@ -127,25 +127,28 @@ export default function Generate() {
                 key={index}
                 sx={{
                     m: 2,
-                    p: 2,
+                    width: '300px',  // Increased width
+                    height: '200px', // Set a fixed height
                     border: '1px solid',
                     borderColor: 'grey.300',
                     borderRadius: 2,
                     cursor: 'pointer',
                     backgroundColor: flipped[index] ? 'lightgray' : 'white',
+                    overflow: 'hidden', // Prevent content from overflowing
                 }}
                 onClick={() => handleCardClick(index)}
             >
-                <Typography variant="h6">Flashcard {index + 1}</Typography>
+                <Typography variant="subtitle1" sx={{ p: 1, textAlign: 'center' }}>Flashcard {index + 1}</Typography>
                 <Box
                     sx={{
                         perspective: '1000px',
+                        height: 'calc(100% - 40px)', // Adjust for the title
                         '& > div': {
                             transition: 'transform 0.8s',
                             transformStyle: 'preserve-3d',
                             position: 'relative',
                             width: '100%',
-                            height: '200px',
+                            height: '100%',
                             boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)',
                             transform: flipped[index] ? 'rotateY(180deg)' : 'rotateY(0deg)',
                         },
@@ -159,15 +162,20 @@ export default function Generate() {
                             alignItems: 'center',
                             padding: 2,
                             boxSizing: 'border-box',
+                            overflow: 'auto', // Allow scrolling if content overflows
                         },
                     }}
                 >
                     <div>
                         <div style={{ transform: 'rotateY(0deg)' }}>
-                            <Typography variant="h5" component="div">{flashcard.front}</Typography>
+                            <Typography variant="body1" component="div" sx={{ fontSize: '0.9rem', textAlign: 'center' }}>
+                                {flashcard.front}
+                            </Typography>
                         </div>
                         <div style={{ transform: 'rotateY(180deg)' }}>
-                            <Typography variant="h5" component="div">{flashcard.back}</Typography>
+                            <Typography variant="body1" component="div" sx={{ fontSize: '0.9rem', textAlign: 'center' }}>
+                                {flashcard.back}
+                            </Typography>
                         </div>
                     </div>
                 </Box>
@@ -175,7 +183,6 @@ export default function Generate() {
         ))}
     </Box>
 )}
-
 
         <Dialog open = {open} onClose = {handleClose}>
             <DialogTitle>Save Flashcards</DialogTitle>
