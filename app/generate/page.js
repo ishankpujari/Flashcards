@@ -3,13 +3,11 @@ import {useUser} from '@clerk/nextjs'
 import {useRouter} from 'next/navigation'
 import { doc } from 'firebase/firestore';
 import { collection } from 'firebase/firestore';
-import { Box, Typography, Container, TextField, Button, CardActionArea, Dialog, DialogContentText, DialogTitle, DialogContent } from '@mui/material';
+import { Box, Typography, Container, TextField, Button, CardActionArea, Dialog, DialogContentText, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import React, {useState} from 'react';
 import { writeBatch, getDoc } from 'firebase/firestore'; 
 import { CardContent } from '@mui/material';
-
-
-
+import {db}  from '@/firebase';
 
 export default function Generate() {
     const {isLoaded, isSignedIn, user} = useUser();
@@ -21,19 +19,44 @@ export default function Generate() {
     const router = useRouter()
 
     const handleSubmit = async () => {
-        fetch('/api/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text }),
-        })
-            .then((res) => res.json())
-            .then((data) => setFlashcards(data))
-            .catch((error) => console.error('Error:', error));
-        
-    }
-
+        try {
+            const promptText = `Generate 10 concise and effective flashcards about the following topic: ${text}. For each flashcard:
+    1. Create a clear, concise question for the front.
+    2. Provide an accurate, informative answer for the back.
+    3. Focus on a single concept or piece of information.
+    4. Use simple, accessible language.
+    5. Include various question types (e.g., definitions, examples, comparisons).
+    6. Avoid complex or ambiguous phrasing.
+    7. Use mnemonics or memory aids when appropriate.
+    8. Tailor the difficulty to intermediate level.
+    9. Extract key information if given a body of text.
+    10. Aim for a balanced set covering the topic comprehensively.
+    
+    Return the flashcards as a JSON array of objects, each with 'front' and 'back' properties.`;
+    
+            console.log('Sending prompt:', promptText);
+    
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: promptText }),
+            });
+    
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response error:', errorText);
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+    
+            const data = await response.json();
+            console.log('Received data:', data);
+            setFlashcards(data);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
     const handleCardClick = (id) => {
         setFlipped((prev) => ({
             ...prev,
@@ -82,16 +105,16 @@ export default function Generate() {
     return <Container maxWidth = "md">
         <Box sx = {{mt: 4, mb:6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant = "h4">Generate Flashcards</Typography>
-            {<TextField
-                label = "Enter text to generate flashcards"
-                variant = "outlined"
+            <TextField
+                label="Enter text to generate flashcards"
+                variant="outlined"
                 multiline
-                rows = {4}
+                rows={4}
                 fullWidth
-                value = {text}
-                onChange = {(e) => setText(e.target.value)}
-                sx = {{mt: 2}}
-            />}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                sx={{ mt: 2 }}
+            />
             <Button variant = "contained" color = "primary" onClick = {handleSubmit} sx = {{mt: 2}}>
                 Generate
             </Button>
@@ -113,56 +136,40 @@ export default function Generate() {
                 }}
                 onClick={() => handleCardClick(index)}
             >
-                <Typography variant="h6"> Flashcard Preview:
-                </Typography>
-                <Grid container spacing = {3}>
-                    {flashcards.map((flashcards, index) => (
-                        <Grid item xs={12} sm={6} key={index}>
-                            <CardActionArea onClick={() => handleCardClick(index)}>
-                                <CardContent>
-                                <Box
-                                    sx={{
-                                        perspective: '1000px',
-                                        '& > div': {
-                                        transition: 'transform 0.8s',
-                                        transformStyle: 'preserve-3d',
-                                        position: 'relative',
-                                        width: '100%',
-                                        height: '200px', 
-                                        boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)',
-                                        transform: flipped[index] ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                                        },
-                                        '& > div > div': {
-                                        transition: 'absolute',
-                                        width: '100%',
-                                        height: '100%', 
-                                        backfaceVisibility : 'hidden',
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        padding: 2,
-                                        boxSizing: 'border-box',
-                                        },
-                                    }}
-                                    >
-                                        <div>
-                                            <div>
-                                                <Typography variant="h5" component = "div">{flashcard.front}</Typography>
-                                            </div>
-                                            <div>
-                                                <Typography variant="h5" component = "div">{flashcard.back}</Typography>
-                                            </div>
-                                        </div>
-                                    </Box>
-                                </CardContent>
-                            </CardActionArea>
-                        </Grid>
-                    ))}
-                </Grid>
-                <Box sx = {{mt: 4, display: 'flex', justifyContent: 'center'}}>
-                    <Button variant="contained" color="secondary" onClick={handleOpen}>
-                        Save Flashcards
-                    </Button>
+                <Typography variant="h6">Flashcard {index + 1}</Typography>
+                <Box
+                    sx={{
+                        perspective: '1000px',
+                        '& > div': {
+                            transition: 'transform 0.8s',
+                            transformStyle: 'preserve-3d',
+                            position: 'relative',
+                            width: '100%',
+                            height: '200px',
+                            boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)',
+                            transform: flipped[index] ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                        },
+                        '& > div > div': {
+                            position: 'absolute',
+                            width: '100%',
+                            height: '100%',
+                            backfaceVisibility: 'hidden',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            padding: 2,
+                            boxSizing: 'border-box',
+                        },
+                    }}
+                >
+                    <div>
+                        <div style={{ transform: 'rotateY(0deg)' }}>
+                            <Typography variant="h5" component="div">{flashcard.front}</Typography>
+                        </div>
+                        <div style={{ transform: 'rotateY(180deg)' }}>
+                            <Typography variant="h5" component="div">{flashcard.back}</Typography>
+                        </div>
+                    </div>
                 </Box>
             </Box>
         ))}
@@ -188,6 +195,10 @@ export default function Generate() {
                 />
 
             </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button onClick={saveFlashcards}>Save</Button>
+            </DialogActions>
         </Dialog>
     </Container>
 }
