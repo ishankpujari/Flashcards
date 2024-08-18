@@ -1,37 +1,31 @@
-import { NextResponse } from "next/server"
-import Stripe from 'stripe'
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+import Stripe from 'stripe';
 
-const formatAmountForStripe = (amount, currency)=> {
-    return Math.round(amount * 100)
-}
-export async function POST(req) {
-    const params ={
-        submit_type: 'subscription',
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    try {
+      const { priceId } = req.body;
+      
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
         payment_method_types: ['card'],
         line_items: [
           {
-            price_data: {
-                currency: 'usd',
-                product_data: {
-                    name:'Pro Subscription'
-                },
-                unit_amount: formatAmountForStripe(10),
-                recurring: {
-                    interval: 'month',
-                    interval_count: 1,
-                },
-            },
-
+            price: priceId,
             quantity: 1,
           },
         ],
-        success_url: `${req.headers.origin}/result?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/result?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.origin}/`,
+      });
+
+      res.status(200).json({ sessionId: session.id });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
-    const checkoutSession = await stripe.checkout.sessions.create(params);
-    
-    return NextResponse.json(checkoutSession, {
-            status: 200,
-    })
+  } else {
+    res.setHeader('Allow', 'POST');
+    res.status(405).end('Method Not Allowed');
+  }
 }

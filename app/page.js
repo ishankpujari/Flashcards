@@ -7,6 +7,8 @@ import Link from 'next/link';
 import Head from "next/head";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import SchoolIcon from '@mui/icons-material/School';
+import { loadStripe } from '@stripe/stripe-js';
+import { useState } from 'react';
 
 const theme = createTheme({
     palette: {
@@ -17,10 +19,39 @@ const theme = createTheme({
     },
 });
 
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
 export default function Home() {
+    const [loading, setLoading] = useState(false);
+
+    const handleSubscription = async (priceId) => {
+        setLoading(true);
+        try {
+            const stripe = await stripePromise;
+            const response = await fetch('/api/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ priceId }),
+            });
+            const session = await response.json();
+            const result = await stripe.redirectToCheckout({
+                sessionId: session.sessionId,
+            });
+            if (result.error) {
+                console.error(result.error.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <ThemeProvider theme={theme}>
-            <Box sx={{ width: '100vw', minHeight: '100vh', bgcolor: 'background.default' }}> {/* Full width and height */}
+            <Box sx={{ width: '100vw', minHeight: '100vh', bgcolor: 'background.default' }}>
                 <Head>
                     <title>Flashcard SaaS</title>
                     <meta name="description" content="Create flashcards from your text" />
@@ -171,8 +202,14 @@ export default function Home() {
                                 <Typography color="textSecondary">
                                     Our AI intelligently breaks down your text into concise flashcards, perfect for studying.
                                 </Typography>
-                                <Button variant="contained" color="primary" sx={{ mt: 4, borderRadius: '50px', px: 4 }}>
-                                    Choose this plan
+                                <Button 
+                                    variant="contained" 
+                                    color="primary" 
+                                    sx={{ mt: 4, borderRadius: '50px', px: 4 }}
+                                    onClick={() => handleSubscription('5')} // Replace with your Stripe Price ID for Pro plan
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Processing...' : 'Choose this plan'}
                                 </Button>
                             </Box>
                         </Grid>
@@ -197,9 +234,14 @@ export default function Home() {
                                 <Typography color="textSecondary">
                                     Access your flashcards from any device, at any time. Study on the go with ease.
                                 </Typography>
-                                <br></br>
-                                <Button variant="contained" color="primary" sx={{ mt: 4, borderRadius: '50px', px: 4 }}>
-                                    Choose this plan
+                                <Button 
+                                    variant="contained" 
+                                    color="primary" 
+                                    sx={{ mt: 4, borderRadius: '50px', px: 4 }}
+                                    onClick={() => handleSubscription('10')} // Replace with your Stripe Price ID for Premium plan
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Processing...' : 'Choose this plan'}
                                 </Button>
                             </Box>
                         </Grid>
