@@ -74,7 +74,7 @@ export default function Home() {
                 flashcards has never been easier.
               </Typography>
               <Button variant='contained' color='primary' sx={{ mt: 2 }}>
-                Choose this plan
+                <Link href = "/generate"> Choose this plan </Link>
               </Button>
             </Box>
           </Grid>

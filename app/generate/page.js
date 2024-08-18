@@ -1,21 +1,19 @@
 'use client'
-import {useUser} from '@clerk/nextjs'
-import {useRouter} from 'next/navigation'
-import { doc } from 'firebase/firestore';
-import { collection } from 'firebase/firestore';
-import { Box, Typography, Container, TextField, Button, CardActionArea, Dialog, DialogContentText, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import React, {useState} from 'react';
-import { writeBatch, getDoc } from 'firebase/firestore'; 
-import { CardContent } from '@mui/material';
-import {db}  from '@/firebase';
+import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
+import { doc, collection, writeBatch, getDoc } from 'firebase/firestore'
+import { AppBar, Toolbar, Box, Typography, Container, TextField, Button, Dialog, DialogContentText, DialogTitle, DialogContent, DialogActions, Card, CardContent } from '@mui/material'
+import React, { useState } from 'react'
+import { db } from '@/firebase'
+import Link from 'next/link'
 
 export default function Generate() {
-    const {isLoaded, isSignedIn, user} = useUser();
-    const [flashcards, setFlashcards] = useState([]);
-    const [flipped, setFlipped] = useState([]);
-    const [text, setText] = useState('');
-    const [name, setName] = useState('');
-    const [open, setOpen] = useState(false);
+    const { isLoaded, isSignedIn, user } = useUser()
+    const [flashcards, setFlashcards] = useState([])
+    const [flipped, setFlipped] = useState([])
+    const [text, setText] = useState('')
+    const [name, setName] = useState('')
+    const [open, setOpen] = useState(false)
     const router = useRouter()
 
     const handleSubmit = async () => {
@@ -32,46 +30,48 @@ export default function Generate() {
     9. Extract key information if given a body of text.
     10. Aim for a balanced set covering the topic comprehensively.
     
-    Return the flashcards as a JSON array of objects, each with 'front' and 'back' properties.`;
-    
-            console.log('Sending prompt:', promptText);
-    
+    Return the flashcards as a JSON array of objects, each with 'front' and 'back' properties.`
+
+            console.log('Sending prompt:', promptText)
+
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ text: promptText }),
-            });
-    
+            })
+
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Response error:', errorText);
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                const errorText = await response.text()
+                console.error('Response error:', errorText)
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
             }
-    
-            const data = await response.json();
-            console.log('Received data:', data);
-            setFlashcards(data);
+
+            const data = await response.json()
+            console.log('Received data:', data)
+            setFlashcards(data)
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error:', error)
         }
-    };
+    }
+
     const handleCardClick = (id) => {
         setFlipped((prev) => ({
             ...prev,
-            [id] : !prev[id],
+            [id]: !prev[id],
         }))
     }
 
     const handleOpen = () => {
         setOpen(true)
     }
+
     const handleClose = () => {
         setOpen(false)
     }
 
-    const saveFlashcards = async() => {
+    const saveFlashcards = async () => {
         if (!name) {
             alert('Please enter a name for your flashcards set.')
             return
@@ -86,11 +86,11 @@ export default function Generate() {
                 alert('You already have a collection with this name.')
                 return
             } else {
-                collections.push({name})
-                batch.set(userDocRef, {flashcards: collections}, {merge: true})
+                collections.push({ name })
+                batch.set(userDocRef, { flashcards: collections }, { merge: true })
             }
         } else {
-            batch.set(userDocRef, {flashcards: [{name}]})
+            batch.set(userDocRef, { flashcards: [{ name }] })
         }
 
         const colRef = collection(userDocRef, name)
@@ -102,110 +102,138 @@ export default function Generate() {
         handleClose()
         router.push('/flashcards')
     }
-    return <Container maxWidth = "md">
-        <Box sx = {{mt: 4, mb:6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography variant = "h4">Generate Flashcards</Typography>
-            <TextField
-                label="Enter text to generate flashcards"
-                variant="outlined"
-                multiline
-                rows={4}
-                fullWidth
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                sx={{ mt: 2 }}
-            />
-            <Button variant = "contained" color = "primary" onClick = {handleSubmit} sx = {{mt: 2}}>
-                Generate
-            </Button>
-        </Box>
 
-        {flashcards.length > 0 && (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-        {flashcards.map((flashcard, index) => (
-            <Box
-                key={index}
-                sx={{
-                    m: 2,
-                    width: '300px',  // Increased width
-                    height: '200px', // Set a fixed height
-                    border: '1px solid',
-                    borderColor: 'grey.300',
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    backgroundColor: flipped[index] ? 'lightgray' : 'white',
-                    overflow: 'hidden', // Prevent content from overflowing
-                }}
-                onClick={() => handleCardClick(index)}
-            >
-                <Typography variant="subtitle1" sx={{ p: 1, textAlign: 'center' }}>Flashcard {index + 1}</Typography>
-                <Box
-                    sx={{
-                        perspective: '1000px',
-                        height: 'calc(100% - 40px)', // Adjust for the title
-                        '& > div': {
-                            transition: 'transform 0.8s',
-                            transformStyle: 'preserve-3d',
-                            position: 'relative',
-                            width: '100%',
-                            height: '100%',
-                            boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)',
-                            transform: flipped[index] ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                        },
-                        '& > div > div': {
-                            position: 'absolute',
-                            width: '100%',
-                            height: '100%',
-                            backfaceVisibility: 'hidden',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            padding: 2,
-                            boxSizing: 'border-box',
-                            overflow: 'auto', // Allow scrolling if content overflows
-                        },
-                    }}
-                >
-                    <div>
-                        <div style={{ transform: 'rotateY(0deg)' }}>
-                            <Typography variant="body1" component="div" sx={{ fontSize: '0.9rem', textAlign: 'center' }}>
-                                {flashcard.front}
-                            </Typography>
-                        </div>
-                        <div style={{ transform: 'rotateY(180deg)' }}>
-                            <Typography variant="body1" component="div" sx={{ fontSize: '0.9rem', textAlign: 'center' }}>
-                                {flashcard.back}
-                            </Typography>
-                        </div>
-                    </div>
+    return (
+        <>
+            <AppBar position="static">
+                <Toolbar>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                        Flashcard Generator
+                    </Typography>
+                    <Button color="inherit" component={Link} href="/">
+                        Home
+                    </Button>
+                    <Button color="inherit" component={Link} href="/flashcards">
+                        My Flashcards
+                    </Button>
+                </Toolbar>
+            </AppBar>
+            <Container maxWidth="md">
+                <Box sx={{ mt: 4, mb: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Typography variant="h4" gutterBottom>Generate Flashcards</Typography>
+                    <TextField
+                        label="Enter text to generate flashcards"
+                        variant="outlined"
+                        multiline
+                        rows={4}
+                        fullWidth
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        sx={{ mt: 2 }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleSubmit} sx={{ mt: 2 }}>
+                        Generate
+                    </Button>
                 </Box>
-            </Box>
-        ))}
-    </Box>
-)}
 
-        <Dialog open = {open} onClose = {handleClose}>
-            <DialogTitle>Save Flashcards</DialogTitle>
-            <DialogContent>
-                <DialogContentText>
-                    Enter a name for your flashcards set:
-                </DialogContentText>
-                <TextField
-                autoFocus
-                margin="dense"
-                label="Collection Name"
-                type="text"
-                fullWidth
-                value={name} 
-                onChange={(e) => setName(e.target.value)}
-                variant="outlined"
-                />
+                {flashcards.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        {flashcards.map((flashcard, index) => (
+                            <Card
+                                key={index}
+                                sx={{
+                                    m: 2,
+                                    width: 300,
+                                    height: 200,
+                                    cursor: 'pointer',
+                                    perspective: '1000px',
+                                }}
+                                onClick={() => handleCardClick(index)}
+                            >
+                                <Box
+                                    sx={{
+                                        transition: 'transform 0.8s',
+                                        transformStyle: 'preserve-3d',
+                                        position: 'relative',
+                                        width: '100%',
+                                        height: '100%',
+                                        transform: flipped[index] ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                                    }}
+                                >
+                                    <CardContent
+                                        sx={{
+                                            position: 'absolute',
+                                            width: '100%',
+                                            height: '100%',
+                                            backfaceVisibility: 'hidden',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            padding: 2,
+                                            boxSizing: 'border-box',
+                                            overflow: 'auto',
+                                        }}
+                                    >
+                                        <Typography variant="subtitle1" gutterBottom>Flashcard {index + 1}</Typography>
+                                        <Typography variant="body1">{flashcard.front}</Typography>
+                                    </CardContent>
+                                    <CardContent
+                                        sx={{
+                                            position: 'absolute',
+                                            width: '100%',
+                                            height: '100%',
+                                            backfaceVisibility: 'hidden',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            padding: 2,
+                                            boxSizing: 'border-box',
+                                            overflow: 'auto',
+                                            transform: 'rotateY(180deg)',
+                                        }}
+                                    >
+                                        <Typography variant="subtitle1" gutterBottom>Flashcard {index + 1}</Typography>
+                                        <Typography variant="body1">{flashcard.back}</Typography>
+                                    </CardContent>
+                                </Box>
+                            </Card>
+                        ))}
+                    </Box>
+                )}
 
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
-                <Button onClick={saveFlashcards}>Save</Button>
-            </DialogActions>
-        </Dialog>
-    </Container>
+                {flashcards.length > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                        <Button variant="contained" color="secondary" onClick={handleOpen}>
+                            Save Flashcards
+                        </Button>
+                    </Box>
+                )}
+
+                <Dialog open={open} onClose={handleClose}>
+                    <DialogTitle>Save Flashcards</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Enter a name for your flashcards set:
+                        </DialogContentText>
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label="Collection Name"
+                            type="text"
+                            fullWidth
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            variant="outlined"
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose}>Cancel</Button>
+                        <Button onClick={saveFlashcards} variant="contained" color="primary"><Link href = "/">Save</Link></Button>
+                    </DialogActions>
+                </Dialog>
+            </Container>
+        </>
+    )
 }
