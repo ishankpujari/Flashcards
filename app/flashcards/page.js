@@ -96,11 +96,6 @@ export default function Flashcards() {
                                 Generate
                             </Button>
                         </StyledLink>
-                        <StyledLink href="/flashcards">
-                            <Button color="inherit" sx={{ mr: 2 }}>
-                                My Flashcards
-                            </Button>
-                        </StyledLink>
                         <UserButton />
                     </Toolbar>
                 </AppBar>
