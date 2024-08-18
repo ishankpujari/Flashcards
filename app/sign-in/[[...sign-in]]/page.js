@@ -3,7 +3,7 @@ import { Box } from "@mui/system";
 import { SignIn } from '@clerk/nextjs';
 import Link from 'next/link';
 
-export default function SignUpPage() {
+export default function SignInPage() {
     return (
         <Container maxWidth="lg">
             <AppBar position="static">
@@ -18,7 +18,6 @@ export default function SignUpPage() {
                 </Toolbar>
             </AppBar>
             <br />
-            {/* Main Content */}
             <Box
                 sx={{
                     display: 'flex',
@@ -28,8 +27,7 @@ export default function SignUpPage() {
                     minHeight: '80vh',
                 }}
             >
-                <SignIn />
-                
+                <SignIn redirectUrl="/flashcards" />
             </Box>
         </Container>
     );

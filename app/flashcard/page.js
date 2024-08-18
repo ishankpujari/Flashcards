@@ -52,12 +52,10 @@ export default function Flashcard() {
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         {name} Flashcards
                     </Typography>
-                    <Button color="inherit" component={Link} href="/">
-                        Home
-                    </Button>
                     <Button color="inherit" component={Link} href="/flashcards">
                         My Flashcards
                     </Button>
+                    <UserButton />
                 </Toolbar>
             </AppBar>
             <Container sx={{ mt: 4 }}>

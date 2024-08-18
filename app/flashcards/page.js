@@ -1,11 +1,12 @@
 'use client'
-import { useUser } from '@clerk/nextjs'
+import { useUser, UserButton } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { useRouter } from 'next/navigation'
 import { Container, Grid, Card, CardContent, Typography, AppBar, Toolbar, Button } from '@mui/material'
 import Link from 'next/link'
+
 
 export default function Flashcards() {
     const { isLoaded, isSignedIn, user } = useUser()
@@ -45,12 +46,11 @@ export default function Flashcards() {
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         My Flashcards
                     </Typography>
-                    <Button color="inherit" component={Link} href="/">
-                        Home
-                    </Button>
+                    
                     <Button color="inherit" component={Link} href="/generate">
                         Generate
                     </Button>
+                    <UserButton />
                 </Toolbar>
             </AppBar>
             <Container sx={{ mt: 4 }}>

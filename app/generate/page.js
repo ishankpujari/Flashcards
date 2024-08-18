@@ -1,5 +1,5 @@
 'use client'
-import { useUser } from '@clerk/nextjs'
+import { useUser, UserButton } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { doc, collection, writeBatch, getDoc } from 'firebase/firestore'
 import { 
@@ -106,20 +106,14 @@ export default function Generate() {
                     <Button 
                         color="inherit" 
                         component={Link} 
-                        href="/" 
-                        sx={{ mx: 1, '&:hover': { bgcolor: 'primary.dark' } }}
-                    >
-                        Home
-                    </Button>
-                    <Button 
-                        color="inherit" 
-                        component={Link} 
                         href="/flashcards" 
                         sx={{ mx: 1, '&:hover': { bgcolor: 'primary.dark' } }}
                     >
                         My Flashcards
                     </Button>
+                    <UserButton />
                 </Toolbar>
+                
             </AppBar>
 
             <Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
