@@ -14,7 +14,9 @@ export default function Flashcards() {
 
     useEffect(() => {
         const fetchFlashcards = async () => {
-            if (!user) return
+            if (!user || !isSignedIn) {
+                return <Typography>"You are not signed in"</Typography>
+            }
 
             const docRef = doc(collection(db, 'users'), user.id)
             const docSnap = await getDoc(docRef)

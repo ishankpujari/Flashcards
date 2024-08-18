@@ -2,7 +2,12 @@
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { doc, collection, writeBatch, getDoc } from 'firebase/firestore'
-import { AppBar, Toolbar, Box, Typography, Container, TextField, Button, Dialog, DialogContentText, DialogTitle, DialogContent, DialogActions, Card, CardContent } from '@mui/material'
+import { 
+    AppBar, Toolbar, Box, Typography, Container, TextField, 
+    Button, Dialog, DialogContentText, DialogTitle, DialogContent, 
+    DialogActions, Card, CardContent, Grid, CircularProgress,
+    useTheme, useMediaQuery
+} from '@mui/material'
 import React, { useState } from 'react'
 import { db } from '@/firebase'
 import Link from 'next/link'
@@ -14,9 +19,13 @@ export default function Generate() {
     const [text, setText] = useState('')
     const [name, setName] = useState('')
     const [open, setOpen] = useState(false)
+    const [loading, setLoading] = useState(false)
     const router = useRouter()
+    const theme = useTheme()
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
     const handleSubmit = async () => {
+        setLoading(true)
         try {
             const promptText = `Generate 10 concise and effective flashcards about the following topic: ${text}. For each flashcard:
     1. Create a clear, concise question for the front.
@@ -30,29 +39,20 @@ export default function Generate() {
     9. Extract key information if given a body of text.
     10. Aim for a balanced set covering the topic comprehensively.
     
-    Return the flashcards as a JSON array of objects, each with 'front' and 'back' properties.`
-
-            console.log('Sending prompt:', promptText)
-
+    Return the flashcards as a JSON array of objects, each with 'front' and 'back' properties.`;
+            
             const response = await fetch('/api/generate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: promptText }),
             })
-
-            if (!response.ok) {
-                const errorText = await response.text()
-                console.error('Response error:', errorText)
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
-            }
-
+            
             const data = await response.json()
-            console.log('Received data:', data)
             setFlashcards(data)
         } catch (error) {
             console.error('Error:', error)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -63,13 +63,8 @@ export default function Generate() {
         }))
     }
 
-    const handleOpen = () => {
-        setOpen(true)
-    }
-
-    const handleClose = () => {
-        setOpen(false)
-    }
+    const handleOpen = () => setOpen(true)
+    const handleClose = () => setOpen(false)
 
     const saveFlashcards = async () => {
         if (!name) {
@@ -80,47 +75,59 @@ export default function Generate() {
         const batch = writeBatch(db)
         const userDocRef = doc(collection(db, 'users'), user.id)
         const docSnap = await getDoc(userDocRef)
-        if (docSnap.exists()) {
-            const collections = docSnap.data().flashcards || []
-            if (collections.find((f) => f.name == name)) {
-                alert('You already have a collection with this name.')
-                return
-            } else {
-                collections.push({ name })
-                batch.set(userDocRef, { flashcards: collections }, { merge: true })
-            }
-        } else {
-            batch.set(userDocRef, { flashcards: [{ name }] })
+
+        const collections = docSnap.exists() ? docSnap.data().flashcards || [] : []
+        if (collections.find((f) => f.name === name)) {
+            alert('You already have a collection with this name.')
+            return
         }
+
+        collections.push({ name })
+        batch.set(userDocRef, { flashcards: collections }, { merge: true })
 
         const colRef = collection(userDocRef, name)
         flashcards.forEach((flashcard) => {
             const cardDocRef = doc(colRef)
             batch.set(cardDocRef, flashcard)
         })
+        
         await batch.commit()
         handleClose()
         router.push('/flashcards')
     }
 
     return (
-        <>
-            <AppBar position="static">
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+            <AppBar position="static" elevation={4} sx={{ bgcolor: 'primary.main' }}>
                 <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Flashcard Generator
+                    <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+                        Flashcard SaaS
                     </Typography>
-                    <Button color="inherit" component={Link} href="/">
+                    <Button 
+                        color="inherit" 
+                        component={Link} 
+                        href="/" 
+                        sx={{ mx: 1, '&:hover': { bgcolor: 'primary.dark' } }}
+                    >
                         Home
                     </Button>
-                    <Button color="inherit" component={Link} href="/flashcards">
+                    <Button 
+                        color="inherit" 
+                        component={Link} 
+                        href="/flashcards" 
+                        sx={{ mx: 1, '&:hover': { bgcolor: 'primary.dark' } }}
+                    >
                         My Flashcards
                     </Button>
                 </Toolbar>
             </AppBar>
-            <Container maxWidth="md">
-                <Box sx={{ mt: 4, mb: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Typography variant="h4" gutterBottom>Generate Flashcards</Typography>
+
+            <Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
+                <Typography variant="h3" gutterBottom align="center" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                    Generate Flashcards
+                </Typography>
+
+                <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <TextField
                         label="Enter text to generate flashcards"
                         variant="outlined"
@@ -129,89 +136,120 @@ export default function Generate() {
                         fullWidth
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        sx={{ mt: 2 }}
+                        sx={{ mb: 4, maxWidth: 600, width: '100%' }}
                     />
-                    <Button variant="contained" color="primary" onClick={handleSubmit} sx={{ mt: 2 }}>
-                        Generate
+
+                    <Button 
+                        variant="contained" 
+                        color="primary" 
+                        onClick={handleSubmit} 
+                        disabled={loading}
+                        sx={{ 
+                            mt: 2, 
+                            py: 1, 
+                            px: 4, 
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontSize: '1.1rem'
+                        }}
+                    >
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Generate'}
                     </Button>
                 </Box>
 
                 {flashcards.length > 0 && (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-                        {flashcards.map((flashcard, index) => (
+    <Box sx={{ mt: 8 }}>
+        <Grid container spacing={3} justifyContent="center">
+            {flashcards.map((flashcard, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Box
+                        onClick={() => handleCardClick(index)}
+                        sx={{
+                            height: 220,
+                            perspective: '1000px',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                height: '100%',
+                                position: 'relative',
+                                transition: 'transform 0.6s',
+                                transformStyle: 'preserve-3d',
+                                transform: flipped[index] ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                            }}
+                        >
                             <Card
-                                key={index}
                                 sx={{
-                                    m: 2,
-                                    width: 300,
-                                    height: 200,
-                                    cursor: 'pointer',
-                                    perspective: '1000px',
+                                    height: '100%',
+                                    position: 'absolute',
+                                    width: '100%',
+                                    backfaceVisibility: 'hidden',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: 3,
+                                    '&:hover': {
+                                        boxShadow: 6,
+                                    },
                                 }}
-                                onClick={() => handleCardClick(index)}
                             >
-                                <Box
-                                    sx={{
-                                        transition: 'transform 0.8s',
-                                        transformStyle: 'preserve-3d',
-                                        position: 'relative',
-                                        width: '100%',
-                                        height: '100%',
-                                        transform: flipped[index] ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                                    }}
-                                >
-                                    <CardContent
-                                        sx={{
-                                            position: 'absolute',
-                                            width: '100%',
-                                            height: '100%',
-                                            backfaceVisibility: 'hidden',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            padding: 2,
-                                            boxSizing: 'border-box',
-                                            overflow: 'auto',
-                                        }}
-                                    >
-                                        <Typography variant="subtitle1" gutterBottom>Flashcard {index + 1}</Typography>
-                                        <Typography variant="body1">{flashcard.front}</Typography>
-                                    </CardContent>
-                                    <CardContent
-                                        sx={{
-                                            position: 'absolute',
-                                            width: '100%',
-                                            height: '100%',
-                                            backfaceVisibility: 'hidden',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            padding: 2,
-                                            boxSizing: 'border-box',
-                                            overflow: 'auto',
-                                            transform: 'rotateY(180deg)',
-                                        }}
-                                    >
-                                        <Typography variant="subtitle1" gutterBottom>Flashcard {index + 1}</Typography>
-                                        <Typography variant="body1">{flashcard.back}</Typography>
-                                    </CardContent>
-                                </Box>
+                                <CardContent>
+                                    <Typography variant="body1" sx={{ fontSize: '1.1rem', textAlign: 'center' }}>
+                                        {flashcard.front}
+                                    </Typography>
+                                </CardContent>
                             </Card>
-                        ))}
+                            <Card
+                                sx={{
+                                    height: '100%',
+                                    position: 'absolute',
+                                    width: '100%',
+                                    backfaceVisibility: 'hidden',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transform: 'rotateY(180deg)',
+                                    boxShadow: 3,
+                                    '&:hover': {
+                                        boxShadow: 6,
+                                    },
+                                }}
+                            >
+                                <CardContent>
+                                    <Typography variant="body1" sx={{ fontSize: '1.1rem', textAlign: 'center' }}>
+                                        {flashcard.back}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Box>
                     </Box>
-                )}
+                </Grid>
+            ))}
+        </Grid>
+    </Box>
+)}
 
                 {flashcards.length > 0 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                        <Button variant="contained" color="secondary" onClick={handleOpen}>
+                    <Box sx={{ mt: 6, textAlign: 'center' }}>
+                        <Button 
+                            variant="contained" 
+                            color="secondary" 
+                            onClick={handleOpen}
+                            sx={{ 
+                                py: 1, 
+                                px: 4, 
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontSize: '1.1rem'
+                            }}
+                        >
                             Save Flashcards
                         </Button>
                     </Box>
                 )}
 
-                <Dialog open={open} onClose={handleClose}>
+                <Dialog open={open} onClose={handleClose} fullScreen={isMobile}>
                     <DialogTitle>Save Flashcards</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
@@ -230,10 +268,16 @@ export default function Generate() {
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleClose}>Cancel</Button>
-                        <Button onClick={saveFlashcards} variant="contained" color="primary"><Link href = "/">Save</Link></Button>
+                        <Button 
+                            onClick={saveFlashcards} 
+                            variant="contained" 
+                            color="primary"
+                        >
+                            Save
+                        </Button>
                     </DialogActions>
                 </Dialog>
             </Container>
-        </>
+        </Box>
     )
 }
