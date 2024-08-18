@@ -1,5 +1,5 @@
 'use client'
-import { useUser } from '@clerk/nextjs'
+import { useUser, UserButton } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { doc, collection, getDocs } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
@@ -7,6 +7,13 @@ import { db } from '@/firebase'
 import { Container, Grid, Card, CardContent, Typography, Box, AppBar, Toolbar, Button } from '@mui/material'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { styled } from '@mui/system'
+
+// Styled Link to remove default styling and set color to white
+const StyledLink = styled(Link)(({ theme }) => ({
+  textDecoration: 'none',
+  color: 'white', // Inherit color from parent (which is white in this case)
+}));
 
 export default function Flashcard() {
     const { isLoaded, isSignedIn, user } = useUser()
@@ -47,14 +54,21 @@ export default function Flashcard() {
 
     return (
         <>
-            <AppBar position="static">
+            <AppBar position="static" sx={{ bgcolor: '#333', color: '#fff' }}>
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         {name} Flashcards
                     </Typography>
-                    <Button color="inherit" component={Link} href="/flashcards">
-                        My Flashcards
-                    </Button>
+                    <StyledLink href="/flashcards">
+                        <Button color="inherit">
+                            My Flashcards
+                        </Button>
+                    </StyledLink>
+                    <StyledLink href="/">
+                        <Button color="inherit">
+                            Home
+                        </Button>
+                    </StyledLink>
                     <UserButton />
                 </Toolbar>
             </AppBar>

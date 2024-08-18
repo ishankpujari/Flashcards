@@ -1,12 +1,36 @@
 'use client'
+
 import { useUser, UserButton } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
-import { collection, doc, getDoc, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, setDoc, updateDoc, arrayRemove } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { useRouter } from 'next/navigation'
-import { Container, Grid, Card, CardContent, Typography, AppBar, Toolbar, Button } from '@mui/material'
+import { Container, Grid, Card, CardContent, Typography, AppBar, Toolbar, Button, Box, Avatar, Fab, Tooltip, IconButton } from '@mui/material'
 import Link from 'next/link'
+import AddIcon from '@mui/icons-material/Add'
+import SchoolIcon from '@mui/icons-material/School'
+import DeleteIcon from '@mui/icons-material/Delete'
+import { styled } from '@mui/system'
 
+const StyledLink = styled(Link)(({ theme }) => ({
+
+  textDecoration: 'none',
+  position: 'relative',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    width: '0',
+    height: '2px',
+    bottom: '-4px',
+    left: '50%',
+
+    transition: 'all 0.3s ease-out',
+  },
+  '&:hover::after': {
+    width: '100%',
+    left: '0',
+  },
+}))
 
 export default function Flashcards() {
     const { isLoaded, isSignedIn, user } = useUser()
@@ -39,35 +63,80 @@ export default function Flashcards() {
         router.push(`/flashcard?name=${encodeURIComponent(name)}`)
     }
 
+    const handleDelete = async (name) => {
+        const updatedFlashcards = flashcards.filter(flashcard => flashcard.name !== name)
+        setFlashcards(updatedFlashcards)
+
+        const docRef = doc(collection(db, 'users'), user.id)
+        await updateDoc(docRef, {
+            flashcards: arrayRemove({ name: name })
+        })
+    }
+
     return (
-        <>
-            <AppBar position="static">
+        <Box sx={{ flexGrow: 1, bgcolor: 'background.default', minHeight: '100vh' }}>
+            <AppBar position="fixed" elevation={4} sx={{ bgcolor: '#2C3E50' }}>
                 <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                    <SchoolIcon sx={{ mr: 2, color: '#ECF0F1' }} />
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: '#ECF0F1' }}>
                         My Flashcards
                     </Typography>
-                    
-                    <Button color="inherit" component={Link} href="/generate">
-                        Generate
-                    </Button>
+                    <StyledLink href="/generate">
+                        <Button color="inherit" sx={{ mr: 2 }}>
+                            Generate
+                        </Button>
+                    </StyledLink>
+                    <StyledLink href="/">
+                        <Button color="inherit" sx={{ mr: 2 }}>
+                            Home
+                        </Button>
+                    </StyledLink>
                     <UserButton />
                 </Toolbar>
             </AppBar>
-            <Container sx={{ mt: 4 }}>
-                <Grid container spacing={2}>
+            <Toolbar /> {/* This empty Toolbar pushes content below the fixed AppBar */}
+            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+                <Grid container spacing={3}>
                     {flashcards.map((flashcard) => (
                         <Grid item xs={12} sm={6} md={4} lg={3} key={flashcard.name}>
-                            <Card onClick={() => handleCardClick(flashcard.name)}>
-                                <CardContent>
-                                    <Typography variant="h5" component="div">
+                            <Card 
+                                sx={{ 
+                                    height: '100%', 
+                                    display: 'flex', 
+                                    flexDirection: 'column',
+                                    transition: 'transform 0.2s, box-shadow 0.2s',
+                                    '&:hover': {
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: 4,
+                                    }
+                                }}
+                            >
+                                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+                                    <Avatar sx={{ width: 60, height: 60, mb: 2, bgcolor: 'primary.main' }}>
+                                        {flashcard.name.charAt(0).toUpperCase()}
+                                    </Avatar>
+                                    <Typography variant="h6" component="div" align="center">
                                         {flashcard.name}
                                     </Typography>
+                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                        <Button onClick={() => handleCardClick(flashcard.name)} variant="outlined" size="small">
+                                            View
+                                        </Button>
+                                        <IconButton onClick={() => handleDelete(flashcard.name)} color="error" size="small">
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Box>
                                 </CardContent>
                             </Card>
                         </Grid>
                     ))}
                 </Grid>
             </Container>
-        </>
+            <Tooltip title="Create new flashcard set" arrow>
+                <Fab color="primary" aria-label="add" sx={{ position: 'fixed', bottom: 16, right: 16 }}>
+                    <AddIcon />
+                </Fab>
+            </Tooltip>
+        </Box>
     )
 }
