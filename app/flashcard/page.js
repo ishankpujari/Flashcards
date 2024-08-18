@@ -12,7 +12,6 @@ import { styled } from '@mui/system'
 import SchoolIcon from '@mui/icons-material/School'
 import Head from 'next/head'
 
-// Create a custom theme
 const theme = createTheme({
   palette: {
     primary: {

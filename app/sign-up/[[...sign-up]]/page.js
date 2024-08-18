@@ -2,7 +2,7 @@
 
 import { AppBar, Container, Button, Typography, Toolbar, Paper, useTheme, useMediaQuery } from "@mui/material";
 import { Box } from "@mui/system";
-import { SignIn } from '@clerk/nextjs';
+import { SignUp } from '@clerk/nextjs';
 import Link from 'next/link';
 import { styled } from '@mui/system';
 import SchoolIcon from '@mui/icons-material/School';
@@ -37,7 +37,7 @@ const StyledLink = styled(Link)(({ theme }) => ({
     },
 }));
 
-export default function SignInPage() {
+export default function SignUpPage() {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     return (
@@ -58,10 +58,10 @@ export default function SignInPage() {
                 </AppBar>
                 <br></br>
                 <Box sx={{ mt: 8 }}>
-                    <Typography variant="body2" sx={{ marginTop: 2 }} align="center" alignItems={'center'}>
-                        Don't have an account?{' '}
-                        <Link href="/sign-up" passHref>
-                            <Button variant="text">Sign Up</Button>
+                    <Typography variant="body2" sx={{ marginTop: 2 }} align="center">
+                        Already have an account?{' '}
+                        <Link href="/sign-in" passHref>
+                            <Button variant="text">Sign In</Button>
                         </Link>
                     </Typography>
                 </Box>
@@ -79,10 +79,10 @@ export default function SignInPage() {
                         }}
                     >
                         <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold', color: 'text.primary' }}>
-                            Sign In
+                            Sign Up
                         </Typography>
                         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                            <SignIn redirectUrl="/flashcards" />
+                            <SignUp />
                         </Box>
                     </Paper>
                 </Container>
