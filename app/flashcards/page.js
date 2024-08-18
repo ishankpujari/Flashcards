@@ -81,16 +81,12 @@ export default function Flashcards() {
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: '#ECF0F1' }}>
                         My Flashcards
                     </Typography>
-                    <StyledLink href="/generate">
-                        <Button color="inherit" sx={{ mr: 2 }}>
+                    
+                        <Button color="inherit" sx={{ mr: 2 }}><Link href="/generate">
                             Generate
-                        </Button>
-                    </StyledLink>
-                    <StyledLink href="/">
-                        <Button color="inherit" sx={{ mr: 2 }}>
-                            Home
-                        </Button>
-                    </StyledLink>
+                            </Link></Button>
+                   
+                   
                     <UserButton />
                 </Toolbar>
             </AppBar>
@@ -132,11 +128,6 @@ export default function Flashcards() {
                     ))}
                 </Grid>
             </Container>
-            <Tooltip title="Create new flashcard set" arrow>
-                <Fab color="primary" aria-label="add" sx={{ position: 'fixed', bottom: 16, right: 16 }}>
-                    <AddIcon />
-                </Fab>
-            </Tooltip>
         </Box>
     )
 }
