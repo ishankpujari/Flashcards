@@ -28,7 +28,7 @@ export async function POST(req) {
         console.log('AI Response:', responseText);
 
         // Remove markdown syntax if present (both with and without 'json' identifier)
-        responseText = responseText.replace(/```(?:json)?\n|\n```/g, '');
+        responseText = responseText.replace(/```(?:json)?\n|\n```|""/g, '');
 
         // Parse the response
         try {

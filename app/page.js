@@ -28,7 +28,7 @@ export default function Home() {
         setLoading(true);
         try {
             const stripe = await stripePromise;
-            const response = await fetch('/api/create-checkout-session', {
+            const response = await fetch('/api/checkout_sessions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
